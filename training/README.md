@@ -2361,6 +2361,29 @@ runR2 gets **at most 2 sentences fewer** right than q08 in total; (4) TR briefs 
 recorded as an owner override, never as passing the bars. For reference only (already measured, not re-judged): runR lost
 4 Turkish sentences and would not qualify either.
 
+## 2026-11-14 — runR2 verdict: bars NOT all met; SHIPPED by the owner's override rule (written before the result)
+
+`chainR2.sh`, product rule; raw `$S/race/geq/r2-bars.json`. Same-day interleaved timing.
+
+| product right | q08 | runR2 | pre-registered bar |
+|---|---|---|---|
+| en12 / entypo12 / enslang12 / enmulti12 / enascii12 (new, blind) | 0.70 / 0.55 / 0.70 / 0.80 / 0.45 | **1.00 / 0.95 / 0.95 / 0.90 / 0.95** | ≥ 0.95 each: **enmulti12 fails** |
+| original / variants / deep (Turkish) | 1.000 / 0.971 / 0.933 | 1.000 / 0.971 / 0.933 | ≥ q08: holds |
+| fresh9 / typo9 / fresh10 / typo10 / deep10 (Turkish) | 1 / 1 / 1 / 0.917 / 1 | identical | (override rule) |
+| en11 set (seen) | 0.65 / 0.55 / 0.75 / 0.70 / 0.667 | 1.00 / 0.80 / 0.85 / 0.90 / 0.952 | reported |
+| wrong changes, all sets | 3 | **0** | ≤ q08: holds |
+| shown wrong, all sets | 26 | 5 | ≤ q08: holds |
+| median seconds (interleaved) | 4.495 | 4.415 | ≤ q08: holds |
+| Turkish briefs all-right / invented | 0.975 / — | **0.95** / 0.007 | ≥ 0.975: **fails** (one brief of 40) |
+| English briefs fields / all-right / invented | — | 0.93 / 0.80 / 0.014 | reported |
+| help how-to | 0.60 | 0.60 | reported (topic words, not the model) |
+
+**Pre-registered result: fails two bars** (enmulti12 0.90; Turkish briefs all-right 0.95). **Owner's override rule**
+(recorded above before the result): 0 wrong changes on every set — holds (0); more right on the new blind English
+exam — holds (95 of 100 vs 64); Turkish sentence sets at most 2 fewer right than q08 — holds (0 fewer); Turkish briefs
+invented ≤ 0.02 — holds (0.007). **Shipped: r2** (`qwen3.5-0.8b-merit-chat-r2`) as an owner override, not as passing
+the bars; q08 kept for rollback. Not claimed: anything about plan reading (runR2 measured language only).
+
 ## 2026-11-12 — generation 7 + detector v6-g7 + runT: the owner's two styles, drawn like real sheets (written before any g7 exam existed, any g7 training or any g7 score)
 
 **Owner's request (2026-11-12).** "For the 2 examples (style G = Golden/Golden 2, style P = ORNEK) create realistic,

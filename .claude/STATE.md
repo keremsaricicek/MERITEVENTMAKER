@@ -261,3 +261,4 @@ only, never move by themselves); (7) phone check-in at the door (with LAN sharin
 - Demo artifact 9EMAwxAhzuNx7qssJxWaSE; build via $S/wt-demo (checkout commit, build-offline, strip CSP, escape).
 - 2026-11-14: owner override rule for runR2 recorded in training/README.md (0 wrong changes, more EN right, ≤2 TR sentences lost).
 - 2026-11-14 owner: EXE target = 2026-11-15 evening (Istanbul), auto-update REQUIRED in it (fixes go out as updates). Gate still closed: waiting for exact 'EXE YAP' + 'açık depo tamam'. Plan: benchmarks/desktop/AUTO-UPDATE-PLAN.md.
+- 2026-11-14 ~10:00 Istanbul: runR2 shipped by owner override rule (chat-model-pinned → qwen3.5-0.8b-merit-chat-r2, 15/15); q08 rollback. g7 now running (base v2 / runB6d), ~10-12 h.

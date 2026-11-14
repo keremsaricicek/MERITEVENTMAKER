@@ -19,7 +19,7 @@ import crypto from "node:crypto";
 
 export const meta = { name: "chat-model-pinned", tags: ["assistant", "fast"], timeout: 60000 };
 
-const ID = "qwen3.5-0.8b-merit-chat-q08";
+const ID = "qwen3.5-0.8b-merit-chat-r2";
 
 export default async function run({ checks, repoRoot }) {
   const RD = await import(path.join(repoRoot, "server/assistant-reader.mjs"));
