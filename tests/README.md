@@ -2,7 +2,7 @@
 
 ```
 npm install          # once — Playwright only; the app itself has no dependencies
-npm test             # every fast suite (~2 minutes)
+npm test             # every fast suite (~25 minutes under load; CI measured 27 min 50 s)
 npm run test:all     # including the slow ones (real detection on the real plan)
 npm run test:list    # what exists
 node tests/run.mjs xlsx storage       # substring filter on suite name
@@ -19,6 +19,7 @@ if any check failed, any suite threw, or any suite saw a page error.
 | suite | tags | what breaks if it goes red |
 |---|---|---|
 | `smoke` | business | the app does not boot, or a screen throws |
+| `serve-stays-up` | structure | `npm run serve` exits on its own instead of serving until ctrl-c, or ctrl-c does not stop it |
 | `no-sample-specific-runtime-logic` | business | a Golden/ORNEK/merit-real-venue reference in `src/*.js` stops being a documentation comment and becomes a branch on which specific sample was uploaded — the product must understand the language of a plan, never recognise the identity of the image |
 | `guest-and-seating-rules` | business | pax semantics, chair/capacity sync, the planning-vs-arrival split |
 | `physical-logical-seat-separation` | business | a capacity number synthesises physical chairs again (a symbolic table's `chairs` must be `[]`, not a ring tagged `physical:false`), a symbolic table stops seating guests or stops counting toward operational capacity, detected chair coordinates get regenerated into a synthetic ring by a capacity sync, the two totals (`seatingCapacity` vs `physicalCapacity`) collapse into one number, or Assisted Detection's commit path stops sourcing `hasPhysicalSeats` from the plan's own representation verdict |

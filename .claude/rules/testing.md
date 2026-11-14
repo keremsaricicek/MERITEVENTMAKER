@@ -4,7 +4,7 @@
   the first thing to extend:
 
   ```
-  npm test              # every fast suite (~2 min); exit code is the verdict
+  npm test              # every fast suite (~25 min under load); exit code is the verdict
   npm run test:all      # plus the slow ones (real detection on the real plan)
   npm run test:list     # what exists
   ```

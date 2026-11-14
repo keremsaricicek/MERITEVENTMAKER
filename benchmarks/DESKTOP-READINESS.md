@@ -3,6 +3,26 @@
 Section 32. What is ready for a desktop build, what is not, and what must not
 be decided yet.
 
+## Update 2026-11-14 — what exists since this inventory (2026-10-03)
+
+The sections below are the original inventory. Since then the product gained
+parts a desktop build must carry, all of them local, none of them a backend:
+
+- **Local relay** `server/vlm-relay.mjs` (+ `vlm-core`, `vlm-local`,
+  `assistant-reader`, `voice-listener`, `web-research`, `gpu-check`): serves
+  the app and answers the model routes on localhost only; the paid reading's
+  key lives only in its environment.
+- **Local models**, pinned by size + sha256 in `tools/local-vlm/manifests/` and
+  `tools/local-chat/manifests/`, run by a bundled `llama-server`; the plan
+  detector `src/plan-model.js` loads only from pinned bytes.
+- **Disk backup** `server/disk-backup.mjs` (atomic writes, rotation) next to
+  the browser store.
+- **Portable Windows package** (`tools/local-vlm/windows/`): `.cmd` launcher +
+  bundled `node.exe`, explicitly asked for on 2026-10-24; still no EXE or
+  installer. Its open checks: `PRE-TRIAL-CHECKLIST.md`.
+- **The EXE and auto-update plan** is `benchmarks/desktop/AUTO-UPDATE-PLAN.md`;
+  it supersedes "What 'ready' would actually mean" below wherever they differ.
+
 ## The gate is shut
 
 Desktop packaging — EXE, Electron package, Windows installer, PyInstaller or

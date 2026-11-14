@@ -59,7 +59,7 @@ you are about to touch before changing its code.** Current work state:
 - VLM training/evaluation: pre-register bars before results; frozen tests; independent QA (`model-qa-specialist`); see `training/README.md` (V5/V6) and `tools/local-vlm/v5/README.md`.
 
 ## Code health
-- `app-v8.js` size: re-measure with `wc -l src/app-v8.js` (6,874 on 2026-10-03). Ownership map, inventory and order: `benchmarks/APP-V8-OWNERSHIP-MAP.md`, `CODE-INVENTORY.md`, `MODULARIZATION-ORDER.md`.
+- `app-v8.js` size: re-measure with `wc -l src/app-v8.js` (1,342 on 2026-11-14). Ownership map, inventory and order: `benchmarks/APP-V8-OWNERSHIP-MAP.md`, `CODE-INVENTORY.md`, `MODULARIZATION-ORDER.md`.
 - `guest.assignment` has ONE writer (`src/seat-assignment.js`); dependency direction is one-way; booting is not behaving.
 - Rules: `.claude/rules/code-health.md`; procedure: `.claude/skills/merit-maintainability-hardening/`.
 

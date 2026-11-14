@@ -71,14 +71,17 @@ export default async function run({ checks, repoRoot }) {
   const CLAIMS = [
     ["tests/README.md", /the (\d+) classic scripts change order/, "classicScripts"],
     [".claude/rules/code-health.md", /<script src="src\/' index\.html` — (\d+) on/, "classicScripts"],
+    ["CLAUDE.md", /`wc -l src\/app-v8\.js` \(([\d,]+) on/, "v8Lines"],
   ];
   const claimDrift = [];
   for (const [file, re, key] of CLAIMS) {
     const m = read(file).match(re);
     if (!m) claimDrift.push(`${file}: the claim ${re} is no longer there — update this registry with the doc`);
-    else if (Number(m[1]) !== live[key]) claimDrift.push(`${file}: says ${m[1]}, measured ${live[key]}`);
+    else if (Number(m[1].replace(/,/g, "")) !== live[key]) claimDrift.push(`${file}: says ${m[1]}, measured ${live[key]}`);
   }
   checks.equal(claimDrift, [], "figures stated as current in the README and the rules match the code");
+  // `npm test` took ~2 minutes once; it takes ~25 under load (audit 2026-11-14, item 16).
+  checks.equal(["tests/README.md", ".claude/rules/testing.md", "CLAUDE.md"].filter((f) => /npm test[^\n]*~2 min/.test(read(f))), [], "no doc still says npm test takes about 2 minutes");
 
   // Every suite has a row saying what breaks when it goes red. 22 had none
   // on 2026-10-04, and one row sat outside the table behind a blank line.
