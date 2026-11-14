@@ -2351,6 +2351,16 @@ that, not this run's.
 **Not claimed by any result here.** en11* and every older set are seen; a pass on en12 is 100 sentences on one fixture,
 written by the same hand as the data; the timing is this 4-core CPU, not the owner's PC.
 
+### 2026-11-14 — Owner's override rule for runR2 (written before any runR2 result exists; training at step 380/600)
+
+Owner: "20 bir yerde kazanıp 1-2 başka yerde kaybediyorsak yine takılabilir." The pre-registered bars above are NOT
+changed and are reported as they fall. If runR2 fails them, it is still shipped **by the owner's decision** only if ALL
+hold, against q08 measured the same day: (1) **0 wrong changes** on every set; (2) more product-right sentences than q08
+on the new blind English exam; (3) on the Turkish sets (original, variants, deep, fresh9/typo9, fresh10/typo10/deep10)
+runR2 gets **at most 2 sentences fewer** right than q08 in total; (4) TR briefs invented ≤ 0.02. A ship under this rule is
+recorded as an owner override, never as passing the bars. For reference only (already measured, not re-judged): runR lost
+4 Turkish sentences and would not qualify either.
+
 ## 2026-11-12 — generation 7 + detector v6-g7 + runT: the owner's two styles, drawn like real sheets (written before any g7 exam existed, any g7 training or any g7 score)
 
 **Owner's request (2026-11-12).** "For the 2 examples (style G = Golden/Golden 2, style P = ORNEK) create realistic,
